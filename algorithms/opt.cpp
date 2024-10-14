@@ -138,13 +138,16 @@ void reverseSegment(std::vector<int>& tour, int start, int end)
     }
 }
 
-bool twoOptSwap(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities) {
+bool twoOptSwap(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities) 
+{
     bool improved = false;
     double bestGain = 0.0;
     int best_i = 0, best_k = 0;
 
-    for (size_t i = 1; i < tour.size() - 1; ++i) {
-        for (size_t k = i + 1; k < tour.size(); ++k) {
+    for (size_t i = 1; i < tour.size() - 1; ++i)
+    {
+        for (size_t k = i + 1; k < tour.size(); ++k) 
+        {
             int A = tour[i - 1];
             int B = tour[i];
             int C = tour[k];
@@ -154,7 +157,8 @@ bool twoOptSwap(std::vector<int>& tour, const std::map<int, std::pair<double, do
             double newDist = euclideanDistance(cities.at(A), cities.at(C)) + euclideanDistance(cities.at(B), cities.at(D));
             double gain = currentDist - newDist;
 
-            if (gain > bestGain) {
+            if (gain > bestGain) 
+            {
                 bestGain = gain;
                 best_i = i;
                 best_k = k;
@@ -163,8 +167,85 @@ bool twoOptSwap(std::vector<int>& tour, const std::map<int, std::pair<double, do
         }
     }
 
-    if (improved) {
+    if (improved) 
         reverseSegment(tour, best_i, best_k);
+
+    return improved;
+}
+
+bool threeOptSwap(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities) 
+{
+    bool improved = false;
+    double bestGain = 0.0;
+    int best_i = 0, best_j = 0, best_k = 0;
+
+    for (size_t i = 1; i < tour.size() - 2; ++i) 
+    {
+        for (size_t j = i + 1; j < tour.size() - 1; ++j) 
+        {
+            for (size_t k = j + 1; k < tour.size(); ++k) 
+            {
+                int A = tour[i - 1];
+                int B = tour[i];
+                int C = tour[j];
+                int D = tour[(j + 1) % tour.size()];
+                int E = tour[k];
+                int F = tour[(k + 1) % tour.size()];
+
+                double currentDist = euclideanDistance(cities.at(A), cities.at(B)) +
+                                     euclideanDistance(cities.at(C), cities.at(D)) +
+                                     euclideanDistance(cities.at(E), cities.at(F));
+
+                std::vector<double> newDists(4);
+
+                newDists[0] = euclideanDistance(cities.at(A), cities.at(C)) +
+                              euclideanDistance(cities.at(B), cities.at(D)) +
+                              euclideanDistance(cities.at(E), cities.at(F));
+
+                newDists[1] = euclideanDistance(cities.at(A), cities.at(B)) +
+                              euclideanDistance(cities.at(C), cities.at(E)) +
+                              euclideanDistance(cities.at(D), cities.at(F));
+
+                newDists[2] = euclideanDistance(cities.at(A), cities.at(C)) +
+                              euclideanDistance(cities.at(B), cities.at(E)) +
+                              euclideanDistance(cities.at(D), cities.at(F));
+
+                newDists[3] = euclideanDistance(cities.at(A), cities.at(B)) +
+                              euclideanDistance(cities.at(C), cities.at(F)) +
+                              euclideanDistance(cities.at(D), cities.at(E));
+
+                auto minIter = std::min_element(newDists.begin(), newDists.end());
+                double newDist = *minIter;
+                double gain = currentDist - newDist;
+
+                if (gain > bestGain) 
+                {
+                    bestGain = gain;
+                    best_i = i;
+                    best_j = j;
+                    best_k = k;
+                    improved = true;
+
+                    switch (std::distance(newDists.begin(), minIter)) 
+                    {
+                        case 0:
+                            reverseSegment(tour, best_i, best_j);
+                            break;
+                        case 1:
+                            reverseSegment(tour, best_j + 1, best_k);
+                            break;
+                        case 2:
+                            reverseSegment(tour, best_i, best_j);
+                            reverseSegment(tour, best_j + 1, best_k);
+                            break;
+                        case 3:
+                            reverseSegment(tour, best_i + 1, best_j);
+                            reverseSegment(tour, best_j + 1, best_k);
+                            break;
+                    }
+                }
+            }
+        }
     }
 
     return improved;
@@ -201,7 +282,33 @@ int main(int argc, char* argv[])
     double initialDistance = calculateTotalDistance(tour, cities);
     std::cout << "Initial Tour Distance: " << initialDistance << "\n";
 
-    twoOptSwap(tour, cities);
+    bool improved = true;
+    int iteration = 0;
+    while (improved && iteration < MAX_LK_ITER) 
+    {
+        improved = false;
+
+        bool twoOptImprovement = twoOptSwap(tour, cities);
+        if (twoOptImprovement) 
+        {
+            improved = true;
+            std::cout << "2-opt improvement found on iteration " << iteration << "\n";
+        }
+
+        bool threeOptImprovement = threeOptSwap(tour, cities);
+        if (threeOptImprovement) 
+        {
+            improved = true;
+            std::cout << "3-opt improvement found on iteration " << iteration << "\n";
+        }
+
+        if (improved)
+        {
+            iteration++;
+            double currentDistance = calculateTotalDistance(tour, cities);
+            std::cout << "Iteration " << iteration << ", Tour Distance: " << currentDistance << "\n";
+        }
+    }
 
     double optimizedDistance = calculateTotalDistance(tour, cities);
     std::cout << "Optimized Tour Distance: " << optimizedDistance << "\n";
