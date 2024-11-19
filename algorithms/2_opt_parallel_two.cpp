@@ -10,6 +10,8 @@
 #include <algorithm>
 #include <random>
 #include <chrono>
+#include <thread>
+#include <mutex>
 
 double euclideanDistance(std::pair<double, double> a, std::pair<double, double> b) 
 {
@@ -50,29 +52,59 @@ void swap_edges(std::vector<int>& tour, const std::map<int, std::pair<double, do
     }
 }
 
-void two_opt(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities)
+void process_j_chunk(int i, int startIdx, int endIdx, std::vector<int>& tour, 
+                     const std::map<int, std::pair<double, double>>& cities, 
+                     double& currentLength, bool& improved, std::mutex& mtx) 
 {
-    float currentLength = calculateTotalDistance(tour, cities);
-    bool improved {true};
-    while(improved)
+    for (int j = startIdx; j < endIdx; ++j) 
+    {
+        std::vector<int> auxTour(tour);
+        swap_edges(auxTour, cities, i, j);
+
+        float auxLength = calculateTotalDistance(auxTour, cities);
+
+        if (auxLength < currentLength) 
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            if (auxLength < currentLength) 
+            { 
+                currentLength = auxLength;
+                tour = auxTour;
+                improved = true;
+            }
+        }
+    }
+}
+
+void parallel_two_opt(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities) 
+{
+    double currentLength = calculateTotalDistance(tour, cities);
+    bool improved = true;
+    std::mutex mtx;
+    const int numThreads = 4;
+
+    while (improved) 
     {
         improved = false;
 
-        for(int i = 0; i < tour.size() -1; ++i)
+        for (int i = 0; i < tour.size() - 1; ++i) 
         {
-            for (int j = i + 2; j < tour.size(); ++j)
+            std::vector<std::thread> threads;
+
+            int chunkSize = (tour.size() - (i + 2)) / numThreads;
+            for (int t = 0; t < numThreads; ++t) 
             {
-                std::vector<int> auxTour(tour);
-                swap_edges(auxTour, cities, i, j);
+                int startIdx = (i + 2) + t * chunkSize;
+                int endIdx = (t == numThreads - 1) ? (tour.size()) : startIdx + chunkSize;
 
-                float auxLength = calculateTotalDistance(auxTour, cities);
+                threads.push_back(std::thread(process_j_chunk, i, startIdx, endIdx, 
+                                              std::ref(tour), std::cref(cities), 
+                                              std::ref(currentLength), std::ref(improved), std::ref(mtx)));
+            }
 
-                if(auxLength < currentLength)
-                {
-                    currentLength = auxLength;
-                    tour = auxTour;
-                    improved = true;
-                }
+            for (auto& th : threads) 
+            {
+                th.join();
             }
         }
     }
@@ -113,7 +145,7 @@ int main(int argc, char* argv[])
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    two_opt(tour, cities);
+    parallel_two_opt(tour, cities);
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;

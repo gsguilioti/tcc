@@ -2,13 +2,14 @@
 #include <fstream>
 #include <map>
 #include <utility>
-#include <fstream>
 #include <string>
 #include <sstream>
 #include <cmath>
 #include <vector>
 #include <algorithm>
 #include <random>
+#include <thread>
+#include <mutex>
 #include <chrono>
 
 double euclideanDistance(std::pair<double, double> a, std::pair<double, double> b) 
@@ -39,7 +40,7 @@ double calculateTotalDistance(const std::vector<int>& tour, const std::map<int, 
     return totalDistance;
 }
 
-void swap_edges(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities, int i, int j) 
+void swap_edges(std::vector<int>& tour, int i, int j) 
 {
     i += 1;
     while (i < j)
@@ -58,12 +59,12 @@ void two_opt(std::vector<int>& tour, const std::map<int, std::pair<double, doubl
     {
         improved = false;
 
-        for(int i = 0; i < tour.size() -1; ++i)
+        for(int i = 0; i < tour.size() - 1; ++i)
         {
             for (int j = i + 2; j < tour.size(); ++j)
             {
                 std::vector<int> auxTour(tour);
-                swap_edges(auxTour, cities, i, j);
+                swap_edges(auxTour, i, j);
 
                 float auxLength = calculateTotalDistance(auxTour, cities);
 
@@ -76,6 +77,14 @@ void two_opt(std::vector<int>& tour, const std::map<int, std::pair<double, doubl
             }
         }
     }
+}
+
+void optimizeSegment(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities, int start, int end)
+{
+    std::vector<int> segment(tour.begin() + start, tour.begin() + end);
+    two_opt(segment, cities);
+
+    std::copy(segment.begin(), segment.end(), tour.begin() + start);
 }
 
 int main(int argc, char* argv[])
@@ -107,13 +116,24 @@ int main(int argc, char* argv[])
     instance.close();
 
     std::vector<int> tour = generateTour(cities.size());
-
     double initialDistance = calculateTotalDistance(tour, cities);
     std::cout << "Initial Tour Distance: " << initialDistance << "\n";
+    
+    int num_threads = std::thread::hardware_concurrency();
+    int segment_size = tour.size() / num_threads;
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    two_opt(tour, cities);
+    std::vector<std::thread> threads;
+    for (int i = 0; i < num_threads; ++i) 
+    {
+        int start = i * segment_size;
+        int end = (i == num_threads - 1) ? tour.size() : (i + 1) * segment_size;
+        threads.emplace_back(optimizeSegment, std::ref(tour), std::ref(cities), start, end);
+    }
+
+    for (auto& t : threads)
+        t.join();
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
