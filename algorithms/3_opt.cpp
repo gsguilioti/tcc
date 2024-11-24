@@ -2,7 +2,6 @@
 #include <fstream>
 #include <map>
 #include <utility>
-#include <fstream>
 #include <string>
 #include <sstream>
 #include <cmath>
@@ -33,32 +32,41 @@ double calculateTotalDistance(const std::vector<int>& tour, const std::map<int, 
 {
     double totalDistance = 0.0;
     for (size_t i = 0; i < tour.size() - 1; ++i)
-        totalDistance += euclideanDistance(cities.at(tour[i]), cities.at(tour[i+1]));
+        totalDistance += euclideanDistance(cities.at(tour[i]), cities.at(tour[i + 1]));
 
     totalDistance += euclideanDistance(cities.at(tour.back()), cities.at(tour.front()));
     return totalDistance;
 }
 
-void reverseSegment(std::vector<int>& tour, int start, int end) 
+void applyReconnection(std::vector<int>& tour, int i, int j, int k, int option)
 {
-    while (start < end) {
-        std::swap(tour[start], tour[end]);
-        start++;
-        end--;
+    switch (option)
+    {
+        case 1: 
+            std::reverse(tour.begin() + i + 1, tour.begin() + j + 1);
+            break;
+        case 2:
+            std::reverse(tour.begin() + j + 1, tour.begin() + k + 1);
+            break;
+        case 3:
+            std::reverse(tour.begin() + i + 1, tour.begin() + j + 1);
+            std::reverse(tour.begin() + j + 1, tour.begin() + k + 1);
+            break;
+        case 4:
+            std::reverse(tour.begin() + k + 1, tour.end());
+            std::reverse(tour.begin(), tour.begin() + i + 1);
+            break;
+        case 5:
+            std::reverse(tour.begin() + i + 1, tour.end());
+            break;
+        default:
+            break;
     }
-}
-
-void swap_edges_3opt(std::vector<int>& tour, int i, int j, int k) 
-{
-    reverseSegment(tour, i + 1, j);
-    reverseSegment(tour, j + 1, k);
-    reverseSegment(tour, i + 1, k);
 }
 
 void three_opt(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities) 
 {
-    float currentLength = calculateTotalDistance(tour, cities);
-    bool improved {true};
+    bool improved = true;
 
     while (improved) 
     {
@@ -70,15 +78,25 @@ void three_opt(std::vector<int>& tour, const std::map<int, std::pair<double, dou
             {
                 for (int k = j + 1; k < tour.size(); ++k) 
                 {
-                    std::vector<int> auxTour(tour);
+                    double bestGain = 0.0;
+                    int bestOption = -1;
 
-                    swap_edges_3opt(auxTour, i, j, k);
+                    for (int option = 1; option <= 5; ++option) 
+                    {
+                        std::vector<int> candidateTour = tour;
+                        applyReconnection(candidateTour, i, j, k, option);
+                        double gain = calculateTotalDistance(tour, cities) - calculateTotalDistance(candidateTour, cities);
 
-                    float auxLength = calculateTotalDistance(auxTour, cities);
+                        if (gain > bestGain) 
+                        {
+                            bestGain = gain;
+                            bestOption = option;
+                        }
+                    }
 
-                    if (auxLength < currentLength) {
-                        currentLength = auxLength;
-                        tour = auxTour;
+                    if (bestOption != -1) 
+                    {
+                        applyReconnection(tour, i, j, k, bestOption);
                         improved = true;
                     }
                 }

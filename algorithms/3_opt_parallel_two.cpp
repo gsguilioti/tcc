@@ -2,7 +2,6 @@
 #include <fstream>
 #include <map>
 #include <utility>
-#include <fstream>
 #include <string>
 #include <sstream>
 #include <cmath>
@@ -11,15 +10,16 @@
 #include <random>
 #include <chrono>
 #include <thread>
-#include <atomic>
-#include <mutex>
+#include <mutex> 
+
+std::mutex tourMutex;
 
 double euclideanDistance(std::pair<double, double> a, std::pair<double, double> b) 
 {
     return std::sqrt(std::pow(a.first - b.first, 2) + std::pow(a.second - b.second, 2));
 }
 
-std::vector<int> generateTour(int size) 
+std::vector<int> generateTour(int size)
 {
     std::vector<int> tour(size);
     for (int i = 0; i < size; ++i) 
@@ -34,97 +34,119 @@ std::vector<int> generateTour(int size)
 
 double calculateTotalDistance(const std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities) 
 {
+    std::vector<int> copyTour(tour);
     double totalDistance = 0.0;
-    for (size_t i = 0; i < tour.size() - 1; ++i)
-        totalDistance += euclideanDistance(cities.at(tour[i]), cities.at(tour[i+1]));
+    for (size_t i = 0; i < copyTour.size() - 1; ++i) 
+    {
+        if (cities.find(copyTour[i]) == cities.end() || cities.find(copyTour[i + 1]) == cities.end()) 
+            continue;
 
-    totalDistance += euclideanDistance(cities.at(tour.back()), cities.at(tour.front()));
+        totalDistance += euclideanDistance(cities.at(copyTour[i]), cities.at(copyTour[i + 1]));
+    }
+
+    if (cities.find(copyTour.back()) == cities.end() || cities.find(copyTour.front()) != cities.end())
+         totalDistance += euclideanDistance(cities.at(copyTour.back()), cities.at(copyTour.front()));
+
     return totalDistance;
 }
 
-void reverseSegment(std::vector<int>& tour, int start, int end) 
+void applyReconnection(std::vector<int>& tour, int i, int j, int k, int option)
 {
-    while (start < end) {
-        std::swap(tour[start], tour[end]);
-        start++;
-        end--;
+    switch (option)
+    {
+        case 1: 
+            std::reverse(tour.begin() + i + 1, tour.begin() + j + 1);
+            break;
+        case 2:
+            std::reverse(tour.begin() + j + 1, tour.begin() + k + 1);
+            break;
+        case 3:
+            std::reverse(tour.begin() + i + 1, tour.begin() + j + 1);
+            std::reverse(tour.begin() + j + 1, tour.begin() + k + 1);
+            break;
+        case 4:
+            std::reverse(tour.begin() + k + 1, tour.end());
+            std::reverse(tour.begin(), tour.begin() + i + 1);
+            break;
+        case 5:
+            std::reverse(tour.begin() + i + 1, tour.end());
+            break;
+        default:
+            break;
     }
 }
 
-void swap_edges_3opt(std::vector<int>& tour, int i, int j, int k) 
+void best_option_search(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities, 
+                           int i, int j, int k, bool& improved)
 {
-    reverseSegment(tour, i + 1, j);
-    reverseSegment(tour, j + 1, k);
-    reverseSegment(tour, i + 1, k);
+    double bestGain = 0.0;
+    int bestOption = -1;
+
+    for (int option = 1; option <= 5; ++option) 
+    {
+        std::vector<int> candidateTour = tour;
+        applyReconnection(candidateTour, i, j, k, option);
+        double gain = calculateTotalDistance(tour, cities) - calculateTotalDistance(candidateTour, cities);
+
+        if (gain > bestGain) 
+        {
+            bestGain = gain;
+            bestOption = option;
+        }
+    }
+
+    if (bestOption != -1) 
+    {
+        std::lock_guard<std::mutex> lock(tourMutex);
+        applyReconnection(tour, i, j, k, bestOption);
+        improved = true;
+    }
 }
 
-void three_opt_parallel(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities) 
+void three_opt(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities) 
 {
-    float currentLength = calculateTotalDistance(tour, cities);
-    bool improved {true};
-
-    unsigned int numThreads = std::thread::hardware_concurrency();
-    numThreads = numThreads == 0 ? 4 : numThreads;
+    bool improved = true;
 
     while (improved) 
     {
         improved = false;
         std::vector<std::thread> threads;
-        std::mutex mtx;
 
         for (int i = 0; i < tour.size() - 2; ++i) 
         {
-            for (int j = i + 1; j < tour.size() - 1; ++j)
-             {
+            for (int j = i + 1; j < tour.size() - 1; ++j) 
+            {
                 for (int k = j + 1; k < tour.size(); ++k) 
-                {
-                    if (k % numThreads == 0) {
-                        threads.push_back(std::thread([&tour, &cities, &currentLength, i, j, k, &mtx]() 
-                        {
-                            std::vector<int> auxTour(tour);
-                            swap_edges_3opt(auxTour, i, j, k);
-                            float auxLength = calculateTotalDistance(auxTour, cities);
-
-                            if (auxLength < currentLength) 
-                            {
-                                std::lock_guard<std::mutex> lock(mtx);
-                                currentLength = auxLength;
-                                tour = auxTour;
-                            }
-                        }));
-                    }
-                }
+                    threads.push_back(std::thread(best_option_search, std::ref(tour), std::cref(cities), i, j, k, std::ref(improved)));
             }
         }
 
-        for (auto& t : threads) 
+        for (auto& t : threads)
         {
-            if (t.joinable())
-                t.join();
+            t.join();
         }
-
-        if (currentLength < calculateTotalDistance(tour, cities)) 
-            improved = true;
     }
 }
 
-int main(int argc, char* argv[]) 
+int main(int argc, char* argv[])
 {
-    std::string filename{"../instances/"};
+    std::string filename {"../instances/"};
     std::ifstream instance(filename.append(argv[1]));
 
     std::string node;
-    while (std::getline(instance, node)) {
-        if (node.find("NODE_COORD_SECTION"))
+    while(std::getline(instance, node))
+    {
+        if(node.find("NODE_COORD_SECTION"))
             break;
     }
 
     std::map<int, std::pair<double, double>> cities;
-    while (std::getline(instance, node)) {
+    while(std::getline(instance, node))
+    {
         std::istringstream iss(node);
         int key;
         double value1, value2;
-        if (iss >> key >> value1 >> value2)
+        if(iss >> key >> value1 >> value2)
             cities[key] = std::make_pair(value1, value2);
     }
 
@@ -137,7 +159,7 @@ int main(int argc, char* argv[])
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    three_opt_parallel(tour, cities);
+    three_opt(tour, cities);
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = end - start;
