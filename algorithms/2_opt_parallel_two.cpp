@@ -13,6 +13,8 @@
 #include <thread>
 #include <mutex>
 
+#define NUM_THREADS 8
+
 double euclideanDistance(std::pair<double, double> a, std::pair<double, double> b) 
 {
     return std::sqrt(std::pow(a.first - b.first, 2) + std::pow(a.second - b.second, 2));
@@ -81,7 +83,6 @@ void parallel_two_opt(std::vector<int>& tour, const std::map<int, std::pair<doub
     double currentLength = calculateTotalDistance(tour, cities);
     bool improved = true;
     std::mutex mtx;
-    const int numThreads = 4;
 
     while (improved) 
     {
@@ -91,11 +92,11 @@ void parallel_two_opt(std::vector<int>& tour, const std::map<int, std::pair<doub
         {
             std::vector<std::thread> threads;
 
-            int chunkSize = (tour.size() - (i + 2)) / numThreads;
-            for (int t = 0; t < numThreads; ++t) 
+            int chunkSize = (tour.size() - (i + 2)) / NUM_THREADS;
+            for (int t = 0; t < NUM_THREADS; ++t) 
             {
                 int startIdx = (i + 2) + t * chunkSize;
-                int endIdx = (t == numThreads - 1) ? (tour.size()) : startIdx + chunkSize;
+                int endIdx = (t == NUM_THREADS - 1) ? (tour.size()) : startIdx + chunkSize;
 
                 threads.push_back(std::thread(process_j_chunk, i, startIdx, endIdx, 
                                               std::ref(tour), std::cref(cities), 

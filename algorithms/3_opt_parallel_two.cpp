@@ -12,6 +12,8 @@
 #include <thread>
 #include <mutex> 
 
+#define NUM_THREADS 8
+
 std::mutex tourMutex;
 
 double euclideanDistance(std::pair<double, double> a, std::pair<double, double> b) 
@@ -110,20 +112,35 @@ void three_opt(std::vector<int>& tour, const std::map<int, std::pair<double, dou
     while (improved) 
     {
         improved = false;
-        std::vector<std::thread> threads;
 
         for (int i = 0; i < tour.size() - 2; ++i) 
         {
             for (int j = i + 1; j < tour.size() - 1; ++j) 
             {
-                for (int k = j + 1; k < tour.size(); ++k) 
-                    threads.push_back(std::thread(best_option_search, std::ref(tour), std::cref(cities), i, j, k, std::ref(improved)));
-            }
-        }
+                int num_k = tour.size() - (j + 1);
+                int chunk_size = (num_k + NUM_THREADS - 1) / NUM_THREADS;
 
-        for (auto& t : threads)
-        {
-            t.join();
+                std::vector<std::thread> threads;
+
+                for (int t = 0; t < NUM_THREADS; ++t) 
+                {
+                    int start_k = j + 1 + t * chunk_size;
+                    int end_k = std::min(j + 1 + (t + 1) * chunk_size, (int)tour.size());
+
+                    if (start_k >= end_k) break;
+
+                    threads.emplace_back([&tour, &cities, &improved, i, j, start_k, end_k]() {
+                        for (int k = start_k; k < end_k; ++k) {
+                            best_option_search(tour, cities, i, j, k, improved);
+                        }
+                    });
+                }
+
+                for (auto& t : threads) 
+                {
+                    t.join();
+                }
+            }
         }
     }
 }
