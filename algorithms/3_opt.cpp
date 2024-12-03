@@ -15,19 +15,6 @@ double euclideanDistance(std::pair<double, double> a, std::pair<double, double> 
     return std::sqrt(std::pow(a.first - b.first, 2) + std::pow(a.second - b.second, 2));
 }
 
-std::vector<int> generateTour(int size)
-{
-    std::vector<int> tour(size);
-    for (int i = 0; i < size; ++i) 
-        tour[i] = i + 1;
-
-    std::random_device rd;
-    std::mt19937 rng(rd());
-    std::shuffle(tour.begin(), tour.end(), rng);
-
-    return tour;
-}
-
 double calculateTotalDistance(const std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities) 
 {
     double totalDistance = 0.0;
@@ -120,7 +107,11 @@ int main(int argc, char* argv[])
     std::map<int, std::pair<double, double>> cities;
     while(std::getline(instance, node))
     {
-        std::istringstream iss(node);
+         if (node == "EOF")
+            break;
+        
+        std::istringstream  iss(node);
+
         int key;
         double value1, value2;
         if(iss >> key >> value1 >> value2)
@@ -129,21 +120,70 @@ int main(int argc, char* argv[])
 
     instance.close();
 
-    std::vector<int> tour = generateTour(cities.size());
+    std::string toursFilepath = "../tours/";
+    toursFilepath.append(argv[1]);
+    toursFilepath.append(".txt");
+    std::ifstream toursFile(toursFilepath);
+    if (!toursFile.is_open()) {
+        std::cerr << "Error: Could not open tours file " << toursFilepath << "\n";
+        return 1;
+    }
 
-    double initialDistance = calculateTotalDistance(tour, cities);
-    std::cout << "Initial Tour Distance: " << initialDistance << "\n";
+    std::string resultsFilepath = "../results/";
+    resultsFilepath.append(argv[1]);
+    resultsFilepath.append(".result");
+    resultsFilepath.append(".txt");
+    std::ofstream resultsFile(resultsFilepath, std::ios::app);
+    if (!resultsFile.is_open()) {
+        std::cerr << "Error: Could not open results file " << resultsFilepath << "\n";
+        return 1;
+    }
 
-    auto start = std::chrono::high_resolution_clock::now();
+    std::streambuf* originalCoutBuffer = std::cout.rdbuf();
+    std::cout.rdbuf(resultsFile.rdbuf());
 
-    three_opt(tour, cities);
+    std::cout << "3OPT --------------------------------------------------------------------------------------  \n";
 
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Execution Time: " << elapsed.count() << " seconds\n";
+    int tourIndex = 1;
+    std::string line;
+    while (std::getline(toursFile, line)) {
+        std::istringstream iss(line);
+        std::vector<int> tour;
+        int city;
+        while (iss >> city) {
+            tour.push_back(city);
+        }
 
-    double optimizedDistance = calculateTotalDistance(tour, cities);
-    std::cout << "Optimized Tour Distance: " << optimizedDistance << "\n";
+        if (tour.empty()) {
+            std::cerr << "Error: Empty tour on line " << tourIndex << "\n";
+            continue;
+        }
+
+        std::cout << "Processing Tour #" << tourIndex << "\n";
+
+        std::vector<int> currentTour = tour;
+        double initialDistance = calculateTotalDistance(currentTour, cities);
+        std::cout << "Initial Distance: " << initialDistance << "\n";
+
+        auto start = std::chrono::high_resolution_clock::now();
+        three_opt(currentTour, cities);
+        auto end = std::chrono::high_resolution_clock::now();
+
+        double optimizedDistance = calculateTotalDistance(currentTour, cities);
+        std::cout << "Optimized Distance: " << optimizedDistance << "\n";
+
+        std::chrono::duration<double> elapsed = end - start;
+        std::cout << "Execution Time: " << elapsed.count() << " seconds\n";
+
+        std::cout << "----------------------------------------------- \n";
+        
+        ++tourIndex;
+    }
+
+    toursFile.close();
+     resultsFile.close();
+    std::cout.rdbuf(originalCoutBuffer);
 
     return 0;
 }
+
