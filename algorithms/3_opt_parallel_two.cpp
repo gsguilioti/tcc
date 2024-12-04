@@ -65,33 +65,6 @@ void applyReconnection(std::vector<int>& tour, int i, int j, int k, int option)
     }
 }
 
-void best_option_search(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities, 
-                           int i, int j, int k, bool& improved)
-{
-    double bestGain = 0.0;
-    int bestOption = -1;
-
-    for (int option = 1; option <= 5; ++option) 
-    {
-        std::vector<int> candidateTour = tour;
-        applyReconnection(candidateTour, i, j, k, option);
-        double gain = calculateTotalDistance(tour, cities) - calculateTotalDistance(candidateTour, cities);
-
-        if (gain > bestGain) 
-        {
-            bestGain = gain;
-            bestOption = option;
-        }
-    }
-
-    if (bestOption != -1) 
-    {
-        std::lock_guard<std::mutex> lock(tourMutex);
-        applyReconnection(tour, i, j, k, bestOption);
-        improved = true;
-    }
-}
-
 void parallel_three_opt(std::vector<int>& tour, const std::map<int, std::pair<double, double>>& cities) 
 {
     bool improved = true;
@@ -107,6 +80,10 @@ void parallel_three_opt(std::vector<int>& tour, const std::map<int, std::pair<do
                 int num_k = tour.size() - (j + 1);
                 int chunk_size = (num_k + NUM_THREADS - 1) / NUM_THREADS;
 
+                double bestGain = 0.0;
+                std::vector<int> bestTour = tour;
+                std::mutex bestTourMutex;
+
                 std::vector<std::thread> threads;
 
                 for (int t = 0; t < NUM_THREADS; ++t) 
@@ -116,9 +93,34 @@ void parallel_three_opt(std::vector<int>& tour, const std::map<int, std::pair<do
 
                     if (start_k >= end_k) break;
 
-                    threads.emplace_back([&tour, &cities, &improved, i, j, start_k, end_k]() {
-                        for (int k = start_k; k < end_k; ++k) {
-                            best_option_search(tour, cities, i, j, k, improved);
+                    threads.emplace_back([&, start_k, end_k]() 
+                    {
+                        std::vector<int> localTour = tour;
+                        double localBestGain = 0.0;
+                        std::vector<int> localBestTour = tour;
+
+                        for (int k = start_k; k < end_k; ++k) 
+                        {
+                            for (int option = 1; option <= 5; ++option) 
+                            {
+                                std::vector<int> candidateTour = localTour;
+                                applyReconnection(candidateTour, i, j, k, option);
+                                double gain = calculateTotalDistance(localTour, cities) - 
+                                              calculateTotalDistance(candidateTour, cities);
+
+                                if (gain > localBestGain) 
+                                {
+                                    localBestGain = gain;
+                                    localBestTour = candidateTour;
+                                }
+                            }
+                        }
+
+                        std::lock_guard<std::mutex> lock(bestTourMutex);
+                        if (localBestGain > bestGain) 
+                        {
+                            bestGain = localBestGain;
+                            bestTour = localBestTour;
                         }
                     });
                 }
@@ -126,6 +128,13 @@ void parallel_three_opt(std::vector<int>& tour, const std::map<int, std::pair<do
                 for (auto& t : threads) 
                 {
                     t.join();
+                }
+
+                if (bestGain > 0.0) 
+                {
+                    std::lock_guard<std::mutex> lock(tourMutex);
+                    tour = bestTour;
+                    improved = true;
                 }
             }
         }
