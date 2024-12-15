@@ -1,0 +1,208 @@
+2OPT --------------------------------------------------------------------------------------  
+Processing Tour #1
+Initial Distance: 22602.7
+Optimized Distance: 2639.57
+Execution Time: 5.46386 seconds
+----------------------------------------------- 
+Processing Tour #2
+Initial Distance: 23032.3
+Optimized Distance: 2616.61
+Execution Time: 5.51369 seconds
+----------------------------------------------- 
+Processing Tour #3
+Initial Distance: 22718.1
+Optimized Distance: 2620.36
+Execution Time: 6.66731 seconds
+----------------------------------------------- 
+Processing Tour #4
+Initial Distance: 21887.8
+Optimized Distance: 2535.58
+Execution Time: 6.78957 seconds
+----------------------------------------------- 
+Processing Tour #5
+Initial Distance: 22468.6
+Optimized Distance: 2593.95
+Execution Time: 5.78422 seconds
+----------------------------------------------- 
+PARALLEL 2OPT --------------------------------------------------------------------------------------  
+Processing Tour #1
+Initial Distance: 22602.7
+Optimized Distance: 2682.41
+Execution Time: 1.09148 seconds
+----------------------------------------------- 
+Processing Tour #2
+Initial Distance: 23032.3
+Optimized Distance: 2669.89
+Execution Time: 1.08587 seconds
+----------------------------------------------- 
+Processing Tour #3
+Initial Distance: 22718.1
+Optimized Distance: 2564.76
+Execution Time: 0.909371 seconds
+----------------------------------------------- 
+Processing Tour #4
+Initial Distance: 21887.8
+Optimized Distance: 2517.52
+Execution Time: 1.26354 seconds
+----------------------------------------------- 
+Processing Tour #5
+Initial Distance: 22468.6
+Optimized Distance: 2629.63
+Execution Time: 1.08948 seconds
+----------------------------------------------- 
+3OPT --------------------------------------------------------------------------------------  
+Processing Tour #1
+Initial Distance: 22602.7
+Optimized Distance: 2613.62
+Execution Time: 2234.42 seconds
+----------------------------------------------- 
+Processing Tour #2
+Initial Distance: 23032.3
+Optimized Distance: 2472.42
+Execution Time: 1675.23 seconds
+----------------------------------------------- 
+Processing Tour #3
+Initial Distance: 22718.1
+Optimized Distance: 2592.01
+Execution Time: 1672.6 seconds
+----------------------------------------------- 
+Processing Tour #4
+Initial Distance: 21887.8
+Optimized Distance: 2629.95
+Execution Time: 1673.83 seconds
+----------------------------------------------- 
+Processing Tour #5
+Initial Distance: 22468.6
+Optimized Distance: 2634.65
+Execution Time: 1676.23 seconds
+----------------------------------------------- 
+PARALLEL 3OPT -------------------------------------------------------------------------------------- 
+Processing Tour #1
+Initial Distance: 22602.7
+Optimized Distance: 2602.36
+Execution Time: 707.562 seconds
+----------------------------------------------- 
+Processing Tour #2
+Initial Distance: 23032.3
+Optimized Distance: 2634.62
+Execution Time: 538.744 seconds
+----------------------------------------------- 
+Processing Tour #3
+Initial Distance: 22718.1
+Optimized Distance: 2526.83
+Execution Time: 357.303 seconds
+----------------------------------------------- 
+Processing Tour #4
+Initial Distance: 21887.8
+Optimized Distance: 2556.85
+Execution Time: 536.778 seconds
+----------------------------------------------- 
+Processing Tour #5
+Initial Distance: 22468.6
+Optimized Distance: 2562.39
+Execution Time: 357.882 seconds
+----------------------------------------------- 
+2OPT --------------------------------------------------------------------------------------  
+Processing Tour #1
+Initial Distance: 22602.7
+Optimized Distance: 2639.57
+Execution Time: 5.61448 seconds
+----------------------------------------------- 
+Processing Tour #2
+Initial Distance: 23032.3
+Optimized Distance: 2616.61
+Execution Time: 5.67047 seconds
+----------------------------------------------- 
+Processing Tour #3
+Initial Distance: 22718.1
+Optimized Distance: 2620.36
+Execution Time: 6.74326 seconds
+----------------------------------------------- 
+Processing Tour #4
+Initial Distance: 21887.8
+Optimized Distance: 2535.58
+Execution Time: 6.58603 seconds
+----------------------------------------------- 
+Processing Tour #5
+Initial Distance: 22468.6
+Optimized Distance: 2593.95
+Execution Time: 5.54334 seconds
+----------------------------------------------- 
+PARALLEL 2OPT --------------------------------------------------------------------------------------  
+Processing Tour #1
+Initial Distance: 22602.7
+Optimized Distance: 2606.39
+Execution Time: 0.914375 seconds
+----------------------------------------------- 
+Processing Tour #2
+Initial Distance: 23032.3
+Optimized Distance: 2635.76
+Execution Time: 1.09798 seconds
+----------------------------------------------- 
+Processing Tour #3
+Initial Distance: 22718.1
+Optimized Distance: 2555.44
+Execution Time: 1.09714 seconds
+----------------------------------------------- 
+Processing Tour #4
+Initial Distance: 21887.8
+Optimized Distance: 2693.6
+Execution Time: 1.09808 seconds
+----------------------------------------------- 
+Processing Tour #5
+Initial Distance: 22468.6
+Optimized Distance: 2575.54
+Execution Time: 1.10073 seconds
+----------------------------------------------- 
+3OPT --------------------------------------------------------------------------------------  
+Processing Tour #1
+Initial Distance: 22602.7
+Optimized Distance: 2613.62
+Execution Time: 2242.05 seconds
+----------------------------------------------- 
+Processing Tour #2
+Initial Distance: 23032.3
+Optimized Distance: 2472.42
+Execution Time: 1678 seconds
+----------------------------------------------- 
+Processing Tour #3
+Initial Distance: 22718.1
+Optimized Distance: 2592.01
+Execution Time: 1676.68 seconds
+----------------------------------------------- 
+Processing Tour #4
+Initial Distance: 21887.8
+Optimized Distance: 2629.95
+Execution Time: 1677.46 seconds
+----------------------------------------------- 
+Processing Tour #5
+Initial Distance: 22468.6
+Optimized Distance: 2634.65
+Execution Time: 1678.17 seconds
+----------------------------------------------- 
+PARALLEL 3OPT -------------------------------------------------------------------------------------- 
+Processing Tour #1
+Initial Distance: 22602.7
+Optimized Distance: 2602.36
+Execution Time: 698.246 seconds
+----------------------------------------------- 
+Processing Tour #2
+Initial Distance: 23032.3
+Optimized Distance: 2634.62
+Execution Time: 531.887 seconds
+----------------------------------------------- 
+Processing Tour #3
+Initial Distance: 22718.1
+Optimized Distance: 2526.83
+Execution Time: 352.66 seconds
+----------------------------------------------- 
+Processing Tour #4
+Initial Distance: 21887.8
+Optimized Distance: 2556.85
+Execution Time: 530.472 seconds
+----------------------------------------------- 
+Processing Tour #5
+Initial Distance: 22468.6
+Optimized Distance: 2562.39
+Execution Time: 351.848 seconds
+----------------------------------------------- 
